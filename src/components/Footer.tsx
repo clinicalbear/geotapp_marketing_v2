@@ -35,10 +35,7 @@ export default function Footer() {
             <li>
               <a href="mailto:info@geotapp.com">info@geotapp.com</a>
             </li>
-            <li>
-              <a href="tel:+391234567890">+39 123 456 7890</a>
-            </li>
-            <li>Via di esempio 123, Milano</li>
+            
           </ul>
         </div>
       </div>

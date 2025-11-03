@@ -81,14 +81,32 @@ const segments = [
   {
     title: "Cantieri e impianti",
     text: "Squadre multi-sito, turni complessi e straordinari certificati con geofence e controlli antifrode.",
+    points: [
+      "Gestione turni cantiere e tracciamento presenze geolocalizzate",
+      "Antifroude timbratura con foto e geofence dinamici per sicurezza accesso",
+      "Straordinari certificati e compliance normativa cantieri",
+      "Squadre multi-sito e appalti con ruoli e permessi granulati",
+    ],
   },
   {
     title: "Servizi e manutenzione",
     text: "Tecnici e fornitori registrano presenze, note e materiali senza app proprietarie.",
+    points: [
+      "Gestione tecnici campo e tracciamento interventi in tempo reale",
+      "Work order management con assegnazione automatica task",
+      "Note vocali e foto interventi integrate per documentazione completa",
+      "Firma digitale interventi e gestione fornitori esterni",
+    ],
   },
   {
     title: "Retail e field marketing",
     text: "Promoter e consulenti gestiscono timbrature temporanee, eventi e campagne itineranti.",
+    points: [
+      "Gestione promoter e timbrature temporanee per campagne itineranti",
+      "Tracciamento consulenti field con bonus performance automatici",
+      "Analisi presenza punti vendita e shelf monitoring in tempo reale",
+      "Organizzazione eventi marketing e campagne promozionali dati-driven",
+    ],
   },
 ];
 
@@ -97,16 +115,20 @@ const pricing = [
     name: "Basic",
     price: "€2 / utente",
     details: ["Timbratura web", "Anagrafica team", "Report essenziali"],
+    featured: false,
   },
   {
     name: "Pro",
     price: "€4 / utente",
     details: ["Tutto del Basic", "Geofence illimitati", "Export e filtri avanzati"],
+    featured: true,
+    badge: "Più popolare",
   },
   {
     name: "Enterprise",
     price: "Parliamone",
     details: ["Setup dedicato", "API e SSO", "Supporto premium"],
+    featured: false,
   },
 ];
 
@@ -154,9 +176,8 @@ const floatingDots = Array.from({ length: 18 }).map((_, index) => ({
 export default function HomeContent() {
   const heroRef = useRef<HTMLElement | null>(null);
   const storyVisualRef = useRef<HTMLDivElement | null>(null);
-  const storyScrollRef = useRef<HTMLDivElement | null>(null);
-  const storyLayoutRef = useRef<HTMLDivElement | null>(null);
   const storySectionRef = useRef<HTMLElement | null>(null);
+  const storyScrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const hero = heroRef.current;
@@ -198,6 +219,7 @@ export default function HomeContent() {
     const configs = items.map((el) => ({
       el,
       depth: parseFloat(el.dataset.parallaxDepth ?? "18"),
+      zoom: parseFloat(el.dataset.parallaxZoom ?? "0"),
       axis: el.dataset.parallaxAxis ?? "y",
     }));
 
@@ -207,12 +229,16 @@ export default function HomeContent() {
       const scrollY = window.scrollY;
       const viewportCenter = scrollY + window.innerHeight / 2;
 
-      configs.forEach(({ el, depth, axis }) => {
+      configs.forEach(({ el, depth, zoom, axis }) => {
         const rect = el.getBoundingClientRect();
         const elementCenter = scrollY + rect.top + rect.height / 2;
         const distance = viewportCenter - elementCenter;
         const normalised = Math.max(-1.6, Math.min(1.6, distance / window.innerHeight));
         const translate = (normalised * depth * -12).toFixed(2);
+        
+        // Calcolo dello zoom: quando normalised è 0 (elemento al centro), scale = 1
+        // Quando normalised è lontano dal centro, scale aumenta
+        const scale = (1 + Math.abs(normalised) * zoom).toFixed(3);
 
         if (axis === "x") {
           el.style.setProperty("--parallax-translate-x", `${translate}px`);
@@ -221,6 +247,7 @@ export default function HomeContent() {
           el.style.setProperty("--parallax-translate-y", `${translate}px`);
           el.style.setProperty("--parallax-translate-x", "0px");
         }
+        el.style.setProperty("--parallax-scale", scale);
       });
 
       ticking = false;
@@ -296,49 +323,58 @@ export default function HomeContent() {
   }, []);
 
   useEffect(() => {
-    const elements = document.querySelectorAll<HTMLElement>("[data-animate]");
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("visible");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      {
-        threshold: 0.2,
+    let observer: IntersectionObserver | null = null;
+    
+    // Usa requestAnimationFrame per assicurarsi che il DOM sia aggiornato
+    const frameId = requestAnimationFrame(() => {
+      const elements = document.querySelectorAll<HTMLElement>("[data-animate]");
+      console.log("Found elements with data-animate:", elements.length);
+      
+      if (elements.length === 0) {
+        console.warn("No elements with data-animate found");
+        return;
       }
-    );
+      
+      observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              console.log("Element visible:", entry.target);
+              entry.target.classList.add("visible");
+            } else {
+              console.log("Element not visible:", entry.target);
+              entry.target.classList.remove("visible");
+            }
+          });
+        },
+        {
+          threshold: 0.01,
+          rootMargin: "0px",
+        }
+      );
 
-    elements.forEach((el) => observer.observe(el));
+      elements.forEach((el) => {
+        console.log("Observing:", el);
+        observer!.observe(el);
+      });
+    });
 
-    return () => observer.disconnect();
+    return () => {
+      cancelAnimationFrame(frameId);
+      observer?.disconnect();
+    };
   }, []);
 
   // Parallax sticky effect for story section
   useEffect(() => {
     const storyVisual = storyVisualRef.current;
-    const storyLayout = storyLayoutRef.current;
     const storySection = storySectionRef.current;
 
-    if (!storyVisual || !storyLayout || !storySection) return;
+    if (!storyVisual || !storySection) return;
 
-    let isPinned = false;
-    let unpinTime = 0;
-    let pinnedLeft = 0;
-    let pinnedWidth = 0;
     let isVisible = false;
 
     const handleScroll = () => {
-      const now = Date.now();
-
-      // Se siamo ancora in delay dopo unpin, non applicare pin
-      if (isPinned && now < unpinTime) {
-        return;
-      }
-
-      const visualRect = storyVisual.getBoundingClientRect();
       const sectionRect = storySection.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
 
@@ -352,44 +388,9 @@ export default function HomeContent() {
         isVisible = false;
         storyVisual.classList.remove("visible");
       }
-
-      // Pin quando: top del visual arriva in cima E la sezione ha ancora contenuto da mostrare
-      const shouldPin =
-        visualRect.top <= 0 && sectionRect.bottom > viewportHeight && isVisible;
-
-      if (shouldPin && !isPinned) {
-        // Applica pin
-        isPinned = true;
-        pinnedLeft = visualRect.left - 30; // Sottrai il margine sinistro
-        pinnedWidth = visualRect.width + 30; // Aggiungi il margine alla larghezza totale
-
-        storyVisual.style.position = "fixed";
-        storyVisual.style.top = "0";
-        storyVisual.style.left = pinnedLeft + "px";
-        storyVisual.style.width = visualRect.width + "px";
-        storyVisual.style.zIndex = "50";
-        storyVisual.style.maxHeight = "100vh";
-        storyVisual.style.overflowY = "auto";
-        
-        // Aggiungi padding al container per fare spazio al visual fixed
-        storyLayout.style.paddingLeft = pinnedWidth + "px";
-      } else if (!shouldPin && isPinned) {
-        // Rimuovi pin dopo delay di 1s
-        isPinned = false;
-        unpinTime = now + 1000;
-        storyVisual.style.position = "relative";
-        storyVisual.style.top = "auto";
-        storyVisual.style.left = "auto";
-        storyVisual.style.width = "auto";
-        storyVisual.style.zIndex = "auto";
-        storyVisual.style.maxHeight = "auto";
-        storyVisual.style.overflowY = "visible";
-        
-        // Rimuovi padding dal container
-        storyLayout.style.paddingLeft = "0";
-      }
     };
 
+    handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -502,7 +503,7 @@ export default function HomeContent() {
                 componente è progettato per dare priorità all'informazione giusta, così il team può
                 intervenire senza perdere tempo in passaggi manuali.
               </p>
-              <div className="story-highlight" data-parallax-depth="20">
+              <div className="story-highlight">
                 Nada hardware, zero installazioni: solo una web experience moderna, modulare e
                 personalizzabile.
               </div>
@@ -558,6 +559,15 @@ export default function HomeContent() {
               >
                 <h3>{segment.title}</h3>
                 <p>{segment.text}</p>
+                {segment.points && (
+                  <ul style={{ margin: "16px 0 0 0", paddingLeft: "20px", listStyle: "disc", color: "var(--text-main)", lineHeight: "1.65", fontSize: "0.95rem" }}>
+                    {segment.points.map((point) => (
+                      <li key={point} style={{ marginBottom: "8px" }}>
+                        {point}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </article>
             ))}
           </div>
@@ -583,10 +593,18 @@ export default function HomeContent() {
 
       <section className="pricing" id="pricing">
         <div className="container">
-          <h2 data-animate>Piani modulari per crescere senza attriti</h2>
+          <h2 data-animate>Piani che crescono con te</h2>
           <div className="grid">
             {pricing.map((plan) => (
-              <article key={plan.name} className="reveal" data-animate data-tilt data-tilt-depth="16" data-parallax-depth="16">
+              <article 
+                key={plan.name} 
+                className={`reveal pricing-card ${plan.featured ? 'featured' : ''}`}
+                data-animate 
+                data-tilt 
+                data-tilt-depth="16" 
+                data-parallax-depth={plan.featured ? "22" : "16"}
+              >
+                {plan.badge && <div className="pricing-badge">{plan.badge}</div>}
                 <h3>{plan.name}</h3>
                 <p className="price">{plan.price}</p>
                 <ul>
@@ -594,6 +612,7 @@ export default function HomeContent() {
                     <li key={detail}>{detail}</li>
                   ))}
                 </ul>
+                <a href="#contact" className="pricing-cta">Inizia ora</a>
               </article>
             ))}
           </div>
@@ -601,7 +620,7 @@ export default function HomeContent() {
       </section>
 
       <section className="cta-block">
-        <div className="cta-parallax-layer" data-parallax-depth="36" aria-hidden="true" />
+        <div className="cta-parallax-layer cta-parallax-smooth" data-parallax-depth="18" data-parallax-zoom="0.35" aria-hidden="true" />
         <div className="container">
           <div className="cta-surface reveal" data-animate>
             <h2>Vuoi vedere GeoTapp in azione?</h2>
@@ -637,8 +656,7 @@ export default function HomeContent() {
             Parliamo del tuo progetto
           </h2>
           <p className="reveal" data-animate>
-            Scrivi a <a href="mailto:info@geotapp.com">info@geotapp.com</a> oppure chiamaci al{" "}
-            <a href="tel:+391234567890">+39 123 456 7890</a>. Possiamo aiutarti a trasformare le tue
+            Scrivi a <a href="mailto:info@geotapp.com">info@geotapp.com</a>  Possiamo aiutarti a trasformare le tue
             presenze in dati chiari, affidabili e pronti per la crescita.
           </p>
         </div>

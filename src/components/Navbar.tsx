@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 const navLinks = [
   { label: "Funzionalità", href: "#features" },
@@ -42,7 +43,14 @@ export default function Navbar() {
     <header className="site-header" data-scrolled={scrolled}>
       <div className="container nav-container">
         <Link href="#home" className="logo" onClick={() => setOpen(false)}>
-          GeoTapp
+          <Image 
+            src="/images/logo-scritta.png" 
+            alt="GeoTapp Logo" 
+            width={200}
+            height={50}
+            style={{ width: 'auto', height: 'auto' }}
+            priority
+          />
         </Link>
 
         <nav className="nav-list" aria-label="Navigazione principale">
