@@ -111,6 +111,7 @@ img {
   font-weight: 600;
   color: var(--text-on-dark);
   font-size: 1rem;
+  max-width:120px;
 }
 
 .nav-list {
@@ -462,18 +463,18 @@ main {
 
 .floating-dots span {
   position: absolute;
-  width: 30px;
-  height: 30px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: rgba(247, 248, 255, 0.75);
-  filter: blur(1px);
+  background: rgba(247, 248, 255, 0.55);
+  filter: blur(0.5px);
   animation: float 12s linear infinite;
 }
 
 .floating-dots span:nth-child(odd) {
   animation-duration: 18s;
   animation-delay: -4s;
-  background: rgba(56, 210, 209, 0.85);
+  background: rgba(56, 210, 209, 0.6);
 }
 
 .stats,
