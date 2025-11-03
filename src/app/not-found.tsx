@@ -7,7 +7,6 @@ import {
   Stack,
 } from '@mui/material';
 
-export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: '404 - Pagina Non Trovata | GeoTapp',
