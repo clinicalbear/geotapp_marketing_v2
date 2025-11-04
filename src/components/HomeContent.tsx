@@ -472,7 +472,7 @@ export default function HomeContent() {
       <section className="story" id="features" ref={storySectionRef}>
         <div className="container story-layout">
           <div className="story-visual reveal" data-animate data-tilt data-tilt-depth="10" ref={storyVisualRef}>
-            <strong>Un'unica PWA per tutto il ciclo delle presenze.</strong>
+            <strong>Un&apos;unica PWA per tutto il ciclo delle presenze.</strong>
             <p>
               GeoTapp centralizza timbrature, task operativi e reporting payroll in una Progressive Web App unica che funziona su desktop, smartphone condivisi e chioschi di cantiere senza installazioni.
             </p>
@@ -500,7 +500,7 @@ export default function HomeContent() {
               <h2>La piattaforma che evolve con i tuoi ritmi</h2>
               <p>
                 GeoTapp nasce per aziende che hanno bisogno di agilità visiva e operativa. Ogni
-                componente è progettato per dare priorità all'informazione giusta, così il team può
+                componente è progettato per dare priorità all&apos;informazione giusta, così il team può
                 intervenire senza perdere tempo in passaggi manuali.
               </p>
               <div className="story-highlight">
